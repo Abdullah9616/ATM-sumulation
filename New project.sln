@@ -1,31 +1,383 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.13.35818.85 d17.13
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "New project", "New project\New project.vcxproj", "{ECE9C985-EFD6-4A97-B1B0-3F0607F972AA}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
-		Release|x64 = Release|x64
-		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{ECE9C985-EFD6-4A97-B1B0-3F0607F972AA}.Debug|x64.ActiveCfg = Debug|x64
-		{ECE9C985-EFD6-4A97-B1B0-3F0607F972AA}.Debug|x64.Build.0 = Debug|x64
-		{ECE9C985-EFD6-4A97-B1B0-3F0607F972AA}.Debug|x86.ActiveCfg = Debug|Win32
-		{ECE9C985-EFD6-4A97-B1B0-3F0607F972AA}.Debug|x86.Build.0 = Debug|Win32
-		{ECE9C985-EFD6-4A97-B1B0-3F0607F972AA}.Release|x64.ActiveCfg = Release|x64
-		{ECE9C985-EFD6-4A97-B1B0-3F0607F972AA}.Release|x64.Build.0 = Release|x64
-		{ECE9C985-EFD6-4A97-B1B0-3F0607F972AA}.Release|x86.ActiveCfg = Release|Win32
-		{ECE9C985-EFD6-4A97-B1B0-3F0607F972AA}.Release|x86.Build.0 = Release|Win32
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {25C891B8-8C0E-4939-9476-13A505E47CC7}
-	EndGlobalSection
-EndGlobal
+﻿#include<iostream>
+#include<string>
+#include<fstream>
+using namespace std;
+
+			
+	string account_name;              //Global variables for future use
+	long account_number;
+	long double balance;
+	int pin;
+	int maxwithdraw;
+	int maxtransfer;
+
+	void newaccount()                    //User defined function for first time account opening
+	{
+		cout << "Enter account name: ";
+		cin.ignore();                    //used as a prerequisite for the getline function
+		getline(cin, account_name);
+		cout << "Enter account number : ";
+		cin >> account_number;
+		cout << "Create pin: ";
+		cin >> pin;
+		cout << "Enter initial balance: ";
+		cin >> balance;
+		ofstream opening("accname.txt");        //writing acount title in file
+		if (opening.is_open()) {
+			opening << account_name;
+			opening.close();
+		}
+		ofstream file("accnum.txt");        //acount number in file
+		if (file.is_open()) {
+			file << account_number;
+			file.close();
+		}
+		ofstream pinn("pinfile.txt");       //storing account pin in file which will be required to login
+		if (pinn.is_open()) {
+			pinn << pin;
+			pinn.close();
+		}
+		ofstream bal("accbal.txt");        //storing intial deposit info in file 
+		if (bal.is_open()) {
+			bal << balance;
+			bal.close();
+		}
+	}
+
+void savepin()          /*function to save pin just with a single line call 
+                         instead of writing ofstream function again and again when required */
+{
+	
+	ofstream pinn("pinfile.txt");
+	if (pinn.is_open())
+		pinn << pin;
+	pinn.close();
+}
+
+void loadpin()         //pin load function to for retreaval of pin from the file
+{
+	
+	ifstream pinn("pinfile.txt");
+	pinn >> pin;
+	pinn.close();
+}
+
+int validatepin()         //function to check whether the pin entered by the user is valid or not
+{
+	int inputpin;
+	int attempt = 1;
+	while (attempt < 3)   //lopp to allow the user to take three attempts
+	{
+		cout << "Enter pin: ";
+		cin >> inputpin;
+		loadpin();
+		if (inputpin == pin)  //if the pin entered is valid then proceeding
+		{
+			cout << "\nPIN validated successfully";
+			ifstream name;
+			name.open("accname.txt");
+			if (name.is_open()) {
+				getline(name, account_name);
+				name.close();
+			}
+			else
+				account_name = "Abdullah";
+			
+			cout <<"\nAccount holder: "<<account_name << "\n";
+			return 1;
+		}
+		else   //if the pin is not valid then giving another attempt to the user
+		{
+			cout << "wrong pin\n";
+			attempt++;
+		}
+	}
+	if (attempt == 3)       //if the attempts count reach 3 and still the input pin is wrong then the program exits
+	{
+		cout << "\nYou have taken too many wrong attempts, try again later";
+		exit(0);
+	}
+}
+
+int changepin()           // The function called in order to change the pin
+{
+	
+	int currentpin, newpin, confirmpin;
+	loadpin();            // The load pin function call
+	int attempt = 1;
+	while(attempt<3){
+	cout << "\nEnter pin: ";
+	cin >> currentpin;
+	if (currentpin==pin)  //if the pin entered is same as the pin of the account them proceeded tp the change pin operation
+	{
+	again:          //if new pin and confirmation of the new pin doeas not match then again starting from this point
+		cout << "\nEnter new pin: ";
+		cin >> newpin;
+		cout << "\nconfirm pin: ";
+		cin >> confirmpin;
+		if (newpin == confirmpin)
+		{
+			pin = newpin;
+			savepin();
+			cout << "\n PIN has been successfully changed";
+			return 1;
+		}
+		else
+		{
+			cout << "\npin confirmation does not match !";
+			goto again;     //using goto function to allow to take the action again
+		}
+	}
+	else
+	{
+		cout << "\nwrong pin";
+		attempt++;
+	}	
+	}
+	if(attempt==3){
+	cout << "\ntoo many wrong attempts";
+	return 0;
+	}
+}
+
+void cardtype()   // card selection function for imposing withrawal and transfer limits
+{
+
+	int type;
+	try_:
+	cout << "\nEnter card type:\n";
+	cout << "\n1) Platinum\n 2) Gold\n 3) Silver\n";
+	cin >> type;
+	if (type != 1 && type != 2 && type != 3) {
+		cout << "\nInvalid entry";
+		goto try_;
+	}
+	switch (type)
+	{
+	case 1: {
+		maxwithdraw = 200000;
+		maxtransfer = 200000;
+	}break;
+	case 2: {
+		maxwithdraw = 100000;
+		maxtransfer = 100000;
+	}break;
+	case 3: { maxwithdraw = 50000;
+		maxtransfer = 50000; }
+		  break;
+	}
+}
+
+void loadbalance()       //to read the current ballance from the file
+{
+	
+	ifstream load("accbal.txt");
+	if (load.is_open())
+		load >> balance;
+	load.close();
+}
+void balinquiry()          //called when the user wants to know the current balance
+{
+	loadbalance();
+		cout << "\nYour current balance is " << balance;
+}
+void deposit()     //called when user wants to deposit money in his account
+{
+	
+	float amount;
+	loadbalance();
+	cout << "Current balance: " << balance << "\n";
+	over:
+	cout << "enter deposit amount: ";
+	cin >> amount;
+	if (amount < 0)    //if the amount is negative then given another chance to enter amount 
+	{
+		cout << "\nAmount can not be less than zero\n";
+		goto over;
+	}
+	else
+	{
+		balance = balance + amount;
+		ofstream add("accbal.txt");
+		if (add.is_open()){
+			add << balance;
+		add.close();
+		}
+		loadbalance();
+		cout << "your new balance is: " << balance;
+	}
+}
+void withdrawmoney()   //function for cash withdrawal
+{
+	above:
+	float amount;
+	cout << "\nEnter withdraw amount(max limit " << maxwithdraw << ") :"; //max limit will be prompted as well
+	cin >> amount;
+	loadbalance(); //fetching current balance deatils from the file
+	if (amount > balance)  //condition for entry greater than the balance
+		cout << "\nNot sufficient Balance";
+	else if (balance == 0) //condition for if the balance is zero
+		cout << "\nNot enough balance";
+	else if (amount > maxwithdraw) //condition for if the amount is greater than the limit
+	{
+		cout << "\nlimit exeeded";
+		goto above;
+	}
+	else if (amount < 0) {  //condition for if the entry is negative
+		cout << "\nAmount can't be less than zero";
+		goto above;
+	}
+	else{
+		balance -= amount;
+		ofstream add("accbal.txt");
+		if (add.is_open()){
+			add << balance;
+		add.close();
+		}
+		cout << "\nSuccess";
+		loadbalance();
+		cout << "\nNew balance: " << balance;
+	}
+}
+
+void fetchdetail() //function to fetch account details
+{
+	ifstream check("accname.txt");
+	if (check.is_open())
+		check >> account_name;
+	check.close();
+	cout << "\nAccount name: " << account_name;
+	ifstream ch("accnum.txt");
+	if (ch.is_open())
+		ch>> account_number;
+	ch.close();
+	cout << "\nAccount number: " << account_number;
+	loadbalance();
+	cout << "\nAccount balance: " << balance;
+	loadpin();
+	cout << "\nAccount PIN: " << pin;
+}
+
+void accounts() //function prompts different banks to select while transferring amount
+{
+	int acc;
+	cout << "\nchoose account :";
+	cout << "\n1.BANK ISLAMI";
+	cout << "\n2.MEEZAN BANK";
+	cout << "\n3.STANDARD CHARTERED";
+	cout << "\n4.HBL\n5.UBL\n6.ASKARI\n7.SUMMIT\n8.BAHL\n9.AL-BARAKAH\n";
+	cout << "INPUT: ";
+	pr:
+	cin >> acc;
+	switch (acc) //different cases where either of the bank will be selected
+	{
+	case 1:cout << "\nBANK ISLAMI: ";break;
+	case 2:cout << "\nMEEZAN BANK: ";break;
+	case 3:cout << "\nSTANDARD CHARTERED: ";break;
+	case 4:cout << "\nHBL: ";break;
+	case 5:cout << "\nUBL ISLAMI: ";break;
+	case 6:cout << "\nASKARI: ";break;
+	case 7:cout << "\nSUMMIT: ";break;
+	case 8:cout << "\nBAHL: ";break;
+	case 9:cout << "\nAL-BARAKAH: ";break;
+	default: {
+		cout << "\nWrong input, Enter agian: ";
+		goto pr;
+	}
+	}
+}
+
+void fundstransfer()   // function invoked after prompting different banks
+{
+	int amount,num;
+	accounts();  //function call to select reciepients account
+	cout << "\nEnter account-number: ";
+	cin >> num;
+	up:
+	cout << "\nEnter Amount (max limit "<<maxtransfer<<"): "; //max limit will also be shown 
+	cin >> amount;
+	loadbalance(); //function call to fetch available balance details
+	if (amount > balance) //error handling conditions when balance is not sufficient
+	{
+		cout << "\nNot sufficient Balance";
+		cout << "\nTry again";
+		goto up;
+	}
+	else if (amount > maxtransfer)  //error handling when limit exceeds
+	{
+		cout << "\nLimit exeeded";
+		cout << "\nTry again";
+		cout << "\nEnter amount: ";
+		goto up;
+	}
+	else if (amount < 0) // error handling when negative amout entered
+	{
+		cout << "\namount can not be negative";
+		cout << "\nEnter amount: ";
+		goto up;
+	}
+
+	else
+	{
+		cout << "Transaction Successful\n\n";
+		balance -= amount;
+		ofstream add("accbal.txt");
+		if (add.is_open())
+			add << balance;
+		add.close();
+		loadbalance();
+		cout << "\nNew balance: " << balance;
+	}
+}
+
+void option() //this function shows the main menu options
+{
+	cout << "\t\t\tMENU\n";
+	cout << "Enter choice: \n";
+	cout << "1)Change Account details\n";
+	cout << "2)Check Balance\n";
+	cout << "3)Deposit Money\n";
+	cout << "4)Withdraw Money\n";
+	cout << "5)change pin\n";
+	cout << "6)Fetch Details\n";
+	cout << "7)Funds Transfer\n";
+	cout << "8)Exit\n";
+	cout << "INPUT: ";
+
+}
+
+int main() //main function that manipulates all the functions
+{
+	cout << "Welcome to ATM\n";
+	loadpin();  //account pin is being fetched from the file
+	validatepin();  //here the user needs to validate the pin
+	cardtype(); //card type selection will be done
+	loadbalance(); //balance will be fetched from the file 
+	int choice;
+	string input;  
+	do {
+		option(); //menu being prompted
+		select:
+		cin >> choice; //user will make a choice what he has to do
+		switch (choice)  //sytem will check what does the user require
+		{
+		case 1: newaccount();break;
+		case 2: balinquiry();break;
+		case 3: deposit();break;
+		case 4: withdrawmoney();break;
+		case 5: changepin(); break;
+		case 6: fetchdetail();break;
+		case 7:fundstransfer();break;
+		case 8: exit(0);
+		default: {
+			cout << "\ninvalid entry, enter again: "; //defaault statement executed if no valid option selected
+			goto select;  //this will take backmthe user to the main menu
+		}
+		}
+		cout << "\nWould you like to return to menu(press 'no,No' to exit)"; 
+		cin.ignore();
+		getline(cin,input);  //takes the string input whether or not the user wants to go to the menu again
+	}
+	while (input != "No" && input != "no"); //string input condition being checked
+	return 0; //if not then the program ends
+}
